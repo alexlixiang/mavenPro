@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:context="http://www.springframework.org/schema/context" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop" xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        ">
+        <context:annotation-config/>
+    <context:component-scan base-package="com.mufeng.erp.DAO,com.mufeng.erp.service">
+    </context:component-scan>
+
+    <!--<context:property-override location="classpath:jdbc.properties" /> -->
+
+    <!-- 配置dbcp数据源
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+    </bean>
+     -->
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations" value="classpath:jdbc.properties" />
+    </bean>
+
+    <bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource"
+          destroy-method="close">
+        <!-- 数据库驱动 -->
+        <property name="driverClass" value="${aliLibrary.db.driverClass}" />
+        <!-- 相应驱动的jdbcUrl,你懂的 -->
+        <property name="jdbcUrl" value="${aliLibrary.db.jdbcUrl}" />
+        <!-- 数据库的用户名 -->
+        <property name="username" value="${aliLibrary.db.username}" />
+        <!-- 数据库的密码 -->
+        <property name="password" value="${aliLibrary.db.password}" />
+        <!-- 检查数据库连接池中空闲连接的间隔时间，单位是分，默认值：240，如果要取消则设置为0 -->
+        <property name="idleConnectionTestPeriod" value="${aliLibrary.db.idleConnectionTestPeriod}" />
+        <!-- 连接池中未使用的链接最大存活时间，单位是分，默认值：60，如果要永远存活设置为0 -->
+        <property name="idleMaxAge" value="${aliLibrary.db.idleMaxAge}" />
+        <!-- 每个分区最大的连接数 -->
+        <property name="maxConnectionsPerPartition" value="${aliLibrary.db.maxConnectionsPerPartition}" />
+        <!-- 每个分区最小的连接数 -->
+        <property name="minConnectionsPerPartition" value="${aliLibrary.db.minConnectionsPerPartition}" />
+        <!-- 分区数 ，默认值2，最小1，推荐3-4，视应用而定-->
+        <property name="partitionCount" value="${aliLibrary.db.partitionCount}" />
+        <!-- 每次去拿数据库连接的时候一次性要拿几个,默认值：2 -->
+        <property name="acquireIncrement" value="${aliLibrary.db.acquireIncrement}" />
+        <!-- 缓存prepared statements的大小，默认值：0 -->
+        <property name="statementsCacheSize" value="${aliLibrary.db.statementsCacheSize}" />
+        <!-- 每个分区释放链接助理进程的数量，默认值：3，除非你的一个数据库连接的时间内做了很多工作，不然过多的助理进程会影响你的性能 -->
+        <property name="releaseHelperThreads" value="${aliLibrary.db.releaseHelperThreads}" />
+    </bean>
+
+
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <!-- 配置SessionFactory所需的数据源，注入上面定义的dataSource -->
+        <property name="dataSource" ref="dataSource" />
+        <!-- 定义hibernate的SessionFactory的属性 -->
+        <property name="hibernateProperties">
+            <value>
+                hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+                hibernate.hbm2ddl.auto=update
+                hibernate.show_sql=true
+                hibernate.format_sql=true
+                hibernate.cache.use_second_level_cache=true
+                hibernate.cache.use_query_cache=false
+                hibernate.cache.provider_class=org.hibernate.cache.EhCacheProvider
+                current_session_context_class=thread
+            </value>
+        </property>
+
+        <property name="packagesToScan">
+            <list>
+                <value>com.mufeng.erp.domain</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 配置Hibernate的局部事务管理器，使用HibernateTransactionManager类 -->
+    <!-- 该类是PlatformTransactionManager接口对采用Hibernate的特定实现类 -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <!-- 需要应用事务的方法头 -->
+            <tx:method name="save*" propagation="REQUIRED" />
+            <tx:method name="add*" propagation="REQUIRED" />
+            <tx:method name="update*" propagation="REQUIRED" />
+            <tx:method name="edit*" propagation="REQUIRED" />
+            <tx:method name="saveOrUpdate*" propagation="REQUIRED" />
+            <tx:method name="delete*" propagation="REQUIRED" />
+            <tx:method name="remove*" propagation="REQUIRED" />
+            <tx:method name="grant*" propagation="REQUIRED" />
+            <tx:method name="execute*" propagation="REQUIRED" />
+
+            <!-- 其它方法为事务只读 -->
+            <tx:method name="*" propagation="REQUIRED" read-only="true" />
+        </tx:attributes>
+    </tx:advice>
+    <aop:config>
+        <aop:pointcut id="transactionPointcut" expression="execution(* com.mufeng.erp.service.impl..*Impl.*(..))" />
+        <aop:advisor pointcut-ref="transactionPointcut" advice-ref="transactionAdvice" />
+    </aop:config>
+</beans>
