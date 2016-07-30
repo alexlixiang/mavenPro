@@ -1,5 +1,6 @@
 package com.alex.mavenPro.core.domain;
 
+
 import com.alex.mavenPro.core.common.util.EncryptionUtil;
 
 import javax.persistence.*;
