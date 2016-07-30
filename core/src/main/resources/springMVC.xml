@@ -57,7 +57,7 @@
     <mvc:interceptors>
         <mvc:interceptor>
             <mvc:mapping path="/**" />
-            <bean class="com.mufeng.erp.interceptor.SessionInterceptor">
+            <bean class="com.alex.mavenPro.core.interceptor.SessionInterceptor">
                 <!-- 允许的地址 -->
                 <property name="allowUrls">
                     <list>
